@@ -89,7 +89,7 @@ export default function TopBar() {
     >
       {/* Logo / Titre */}
       <div style={{ fontWeight: 'bold', fontSize: 20, letterSpacing: 1 }}>
-        IDAV Admin
+      Dim+ Admin
       </div>
       {/* Barre de recherche + actions */}
       <Space size="large" align="center">

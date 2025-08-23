@@ -1,36 +1,50 @@
-import { DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Popconfirm, Space, Table, Tabs, Tooltip } from 'antd';
+import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  Breadcrumb,
+  Button,
+  Input,
+  message,
+  Popconfirm,
+  Row,
+  Col,
+  Space,
+  Table,
+  Tabs,
+  Tooltip,
+} from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { deleteCategorie, deleteMarque, getCategories, getMarques } from '../../services/productApi';
 
-const { TabPane } = Tabs; // ou dans AntD v5+ : import { Tabs } from 'antd'; et utiliser items props
+const { TabPane } = Tabs;
+const { Search } = Input;
 
 export default function CategoriesList() {
   const [categories, setCategories] = useState([]);
   const [marques, setMarques] = useState([]);
 
-
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingMarques, setLoadingMarques] = useState(false);
 
-  const [paginationCategories, setPaginationCategories] = useState({ current: 1, pageSize: 10, total: 0 });
-  const [paginationMarques, setPaginationMarques] = useState({ current: 1, pageSize: 10, total: 0 });
-
+  const [paginationCategories, setPaginationCategories] = useState({ current: 1, pageSize: 20, total: 0 });
+  const [paginationMarques, setPaginationMarques] = useState({ current: 1, pageSize: 20, total: 0 });
 
   const [sorterCategories, setSorterCategories] = useState({});
   const [sorterMarques, setSorterMarques] = useState({});
 
+  const [searchCategories, setSearchCategories] = useState('');
+  const [searchMarques, setSearchMarques] = useState('');
+
+  const [activeTab, setActiveTab] = useState('1');
 
   const navigate = useNavigate();
 
-  // --- Chargement catégories ---
-  const fetchCategories = useCallback(async (page = 1, pageSize = 10, sortField, sortOrder) => {
+  const fetchCategories = useCallback(async (page, pageSize, sortField, sortOrder, search) => {
     setLoadingCategories(true);
     try {
       let ordering = '';
       if (sortField) ordering = (sortOrder === 'descend' ? '-' : '') + sortField;
-      const response = await getCategories(page, pageSize, '', ordering);
+      const response = await getCategories(page, pageSize, search, ordering);
       const data = response.data;
       setCategories(data.results || data);
       setPaginationCategories({
@@ -40,18 +54,18 @@ export default function CategoriesList() {
       });
     } catch (error) {
       console.error(error);
+      message.error("Erreur lors du chargement des catégories");
     } finally {
       setLoadingCategories(false);
     }
   }, []);
 
-  // --- Chargement marques ---
-  const fetchMarques = useCallback(async (page = 1, pageSize = 10, sortField, sortOrder) => {
+  const fetchMarques = useCallback(async (page, pageSize, sortField, sortOrder, search) => {
     setLoadingMarques(true);
     try {
       let ordering = '';
       if (sortField) ordering = (sortOrder === 'descend' ? '-' : '') + sortField;
-      const response = await getMarques(page, pageSize, '', ordering);
+      const response = await getMarques(page, pageSize, search, ordering);
       const data = response.data;
       setMarques(data.results || data);
       setPaginationMarques({
@@ -61,43 +75,33 @@ export default function CategoriesList() {
       });
     } catch (error) {
       console.error(error);
+      message.error("Erreur lors du chargement des marques");
     } finally {
       setLoadingMarques(false);
     }
   }, []);
 
-
-
-  // Chargement initial
   useEffect(() => {
-    fetchCategories(paginationCategories.current, paginationCategories.pageSize, sorterCategories.field, sorterCategories.order);
-    fetchMarques(paginationMarques.current, paginationMarques.pageSize, sorterMarques.field, sorterMarques.order);
- 
-  }, [fetchCategories, fetchMarques]);
+    if(activeTab === '1') {
+      fetchCategories(paginationCategories.current, paginationCategories.pageSize, sorterCategories.field, sorterCategories.order, searchCategories);
+    } else if(activeTab === '2') {
+      fetchMarques(paginationMarques.current, paginationMarques.pageSize, sorterMarques.field, sorterMarques.order, searchMarques);
+    }
+  }, [activeTab,
+      fetchCategories, fetchMarques,
+      paginationCategories, paginationMarques,
+      sorterCategories, sorterMarques,
+      searchCategories, searchMarques
+    ]);
 
-  // Handlers de changement table avec pagination et tri
-  const handleTableChangeCategories = (pag, filters, sort) => {
-    setPaginationCategories({ ...paginationCategories, current: pag.current, pageSize: pag.pageSize });
-    setSorterCategories({ field: sort.field, order: sort.order });
-    fetchCategories(pag.current, pag.pageSize, sort.field, sort.order);
-  };
-
-  const handleTableChangeMarques = (pag, filters, sort) => {
-    setPaginationMarques({ ...paginationMarques, current: pag.current, pageSize: pag.pageSize });
-    setSorterMarques({ field: sort.field, order: sort.order });
-    fetchMarques(pag.current, pag.pageSize, sort.field, sort.order);
-  };
-
-
-
-  // Suppression
   const handleDeleteCategorie = async (id) => {
     setLoadingCategories(true);
     try {
       await deleteCategorie(id);
-      fetchCategories(paginationCategories.current, paginationCategories.pageSize, sorterCategories.field, sorterCategories.order);
-    } catch (error) {
-      console.error(error);
+      message.success("Catégorie supprimée");
+      fetchCategories(paginationCategories.current, paginationCategories.pageSize, sorterCategories.field, sorterCategories.order, searchCategories);
+    } catch {
+      message.error("Erreur lors de la suppression");
     } finally {
       setLoadingCategories(false);
     }
@@ -107,35 +111,28 @@ export default function CategoriesList() {
     setLoadingMarques(true);
     try {
       await deleteMarque(id);
-      fetchMarques(paginationMarques.current, paginationMarques.pageSize, sorterMarques.field, sorterMarques.order);
-    } catch (error) {
-      console.error(error);
+      message.success("Marque supprimée");
+      fetchMarques(paginationMarques.current, paginationMarques.pageSize, sorterMarques.field, sorterMarques.order, searchMarques);
+    } catch {
+      message.error("Erreur lors de la suppression");
     } finally {
       setLoadingMarques(false);
     }
   };
 
+  const handleTableChangeCategories = (pag, filters, sort) => {
+    setPaginationCategories({ ...paginationCategories, current: pag.current, pageSize: pag.pageSize });
+    setSorterCategories({ field: sort.field, order: sort.order });
+  };
 
-
-  // Colonnes
+  const handleTableChangeMarques = (pag, filters, sort) => {
+    setPaginationMarques({ ...paginationMarques, current: pag.current, pageSize: pag.pageSize });
+    setSorterMarques({ field: sort.field, order: sort.order });
+  };
 
   const columnsCategories = [
-    {
-      title: 'Nom',
-      dataIndex: 'nom',
-      key: 'nom',
-      sorter: true,
-      width: 300,
-      fixed: 'left',
-    },
-    {
-      title: 'Catégorie parente',
-      dataIndex: ['parent', 'nom'],
-      key: 'parent',
-      sorter: true,
-      width: 300,
-      render: (text) => text || <i>Aucune</i>,
-    },
+    { title: 'Nom', dataIndex: 'nom', key: 'nom', sorter: true, width: 300, fixed: 'left' },
+    { title: 'Catégorie parente', dataIndex: ['parent', 'nom'], key: 'parent', sorter: true, width: 300, render: text => text || <i>Aucune</i> },
     {
       title: 'Actions',
       key: 'actions',
@@ -144,26 +141,13 @@ export default function CategoriesList() {
       render: (_, record) => (
         <Space size="small" split="|">
           <Tooltip title="Visualiser">
-            <Button
-              icon={<EyeOutlined />}
-              type="link"
-              onClick={() => navigate(`/dashboard/categories/${record.id}`)}
-            />
+            <Button icon={<EyeOutlined />} type="link" onClick={() => navigate(`/dashboard/categories/${record.id}`)} />
           </Tooltip>
           <Tooltip title="Modifier">
-            <Button
-              icon={<EditOutlined />}
-              type="link"
-              onClick={() => navigate(`/dashboard/categories/${record.id}/edit`)}
-            />
+            <Button icon={<EditOutlined />} type="link" onClick={() => navigate(`/dashboard/categories/${record.id}/edit`)} />
           </Tooltip>
           <Tooltip title="Supprimer">
-            <Popconfirm
-              title="Confirmer la suppression ?"
-              onConfirm={() => handleDeleteCategorie(record.id)}
-              okText="Oui"
-              cancelText="Non"
-            >
+            <Popconfirm title="Confirmer la suppression ?" onConfirm={() => handleDeleteCategorie(record.id)} okText="Oui" cancelText="Non">
               <Button icon={<DeleteOutlined />} type="link" danger />
             </Popconfirm>
           </Tooltip>
@@ -173,14 +157,7 @@ export default function CategoriesList() {
   ];
 
   const columnsMarques = [
-    {
-      title: 'Nom',
-      dataIndex: 'nom',
-      key: 'nom',
-      sorter: true,
-      width: 300,
-      fixed: 'left',
-    },
+    { title: 'Nom', dataIndex: 'nom', key: 'nom', sorter: true, width: 300, fixed: 'left' },
     {
       title: 'Actions',
       key: 'actions',
@@ -189,26 +166,13 @@ export default function CategoriesList() {
       render: (_, record) => (
         <Space size="small" split="|">
           <Tooltip title="Visualiser">
-            <Button
-              icon={<EyeOutlined />}
-              type="link"
-              onClick={() => navigate(`/dashboard/marques/${record.id}`)}
-            />
+            <Button icon={<EyeOutlined />} type="link" onClick={() => navigate(`/dashboard/marques/${record.id}`)} />
           </Tooltip>
           <Tooltip title="Modifier">
-            <Button
-              icon={<EditOutlined />}
-              type="link"
-              onClick={() => navigate(`/dashboard/marques/${record.id}/edit`)}
-            />
+            <Button icon={<EditOutlined />} type="link" onClick={() => navigate(`/dashboard/marques/${record.id}/edit`)} />
           </Tooltip>
           <Tooltip title="Supprimer">
-            <Popconfirm
-              title="Confirmer la suppression ?"
-              onConfirm={() => handleDeleteMarque(record.id)}
-              okText="Oui"
-              cancelText="Non"
-            >
+            <Popconfirm title="Confirmer la suppression ?" onConfirm={() => handleDeleteMarque(record.id)} okText="Oui" cancelText="Non">
               <Button icon={<DeleteOutlined />} type="link" danger />
             </Popconfirm>
           </Tooltip>
@@ -217,60 +181,104 @@ export default function CategoriesList() {
     },
   ];
 
-
-
   return (
     <div style={{ padding: 24 }}>
-      <Breadcrumb style={{ marginBottom: 16 }}>
-        <Breadcrumb.Item>
-          <Link to="/dashboard">Tableau de bord</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Gestion</Breadcrumb.Item>
-      </Breadcrumb>
+      <Row align="middle" justify="space-between" style={{ marginBottom: 16 }}>
+        <Col>
+          <Breadcrumb>
+            <Breadcrumb.Item><Link to="/dashboard">Tableau de bord</Link></Breadcrumb.Item>
+            <Breadcrumb.Item>Gestion</Breadcrumb.Item>
+          </Breadcrumb>
+        </Col>
+        <Col>
+          <Tabs activeKey={activeTab} onChange={setActiveTab} type="line" destroyInactiveTabPane={false} >
+            <TabPane
+              tab={
+                <Space>
+                  Catégories
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/dashboard/categories/add');
+                    }}
+                  >
+                    Ajouter
+                  </Button>
+                  <Search
+                    placeholder="Rechercher catégories"
+                    allowClear
+                    size="small"
+                    enterButton
+                    onSearch={(text) => setSearchCategories(text.trim())}
+                    style={{ width: 180 }}
+                    onClick={e => e.stopPropagation()} // Empêche switch onglet si clic sur input
+                  />
+                </Space>
+              }
+              key="1"
+            />
+            <TabPane
+              tab={
+                <Space>
+                  Marques
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/dashboard/marques/add');
+                    }}
+                  >
+                    Ajouter
+                  </Button>
+                  <Search
+                    placeholder="Rechercher marques"
+                    allowClear
+                    size="small"
+                    enterButton
+                    onSearch={text => setSearchMarques(text.trim())}
+                    style={{ width: 180 }}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </Space>
+              }
+              key="2"
+            />
+          </Tabs>
+        </Col>
+      </Row>
 
-      <Tabs defaultActiveKey="1" type="line" destroyInactiveTabPane={false}>
-        <TabPane tab="Catégories" key="1">
-          <Button
-            type="primary"
-            style={{ marginBottom: 16 }}
-            onClick={() => navigate('/dashboard/categories/add')}
-          >
-            Ajouter une catégorie
-          </Button>
-          <Table
-            columns={columnsCategories}
-            dataSource={categories}
-            rowKey="id"
-            loading={loadingCategories}
-            pagination={paginationCategories}
-            scroll={{ x: 800 }}
-            onChange={handleTableChangeCategories}
-            bordered
-          />
-        </TabPane>
+      {activeTab === '1' && (
+        <Table
+          columns={columnsCategories}
+          dataSource={categories}
+          rowKey="id"
+          size='small'
+          loading={loadingCategories}
+          pagination={paginationCategories}
+          scroll={{ x: 800 }}
+          onChange={handleTableChangeCategories}
+          bordered
+        />
+      )}
 
-        <TabPane tab="Marques" key="2">
-          <Button
-            type="primary"
-            style={{ marginBottom: 16 }}
-            onClick={() => navigate('/dashboard/marques/add')}
-          >
-            Ajouter une marque
-          </Button>
-          <Table
-            columns={columnsMarques}
-            dataSource={marques}
-            rowKey="id"
-            loading={loadingMarques}
-            pagination={paginationMarques}
-            scroll={{ x: 600 }}
-            onChange={handleTableChangeMarques}
-            bordered
-          />
-        </TabPane>
-
-      
-      </Tabs>
+      {activeTab === '2' && (
+        <Table
+          columns={columnsMarques}
+          dataSource={marques}
+          rowKey="id"
+          size='small'
+          loading={loadingMarques}
+          pagination={paginationMarques}
+          scroll={{ x: 600 }}
+          onChange={handleTableChangeMarques}
+          bordered
+        />
+      )}
     </div>
   );
 }

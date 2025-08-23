@@ -9,10 +9,15 @@ import {
   Table,
   Tag,
   Tooltip,
+  Row,
+  Col,
 } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { deleteUser, getUsers } from '../../services/userApi';
+
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 const { Search } = Input;
 
@@ -29,17 +34,18 @@ export default function UserList() {
 
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 14,
     total: 0,
   });
 
   const [searchText, setSearchText] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // controlled input state
 
-  // fetchUsers prend en compte la pagination et la recherche full text
+  // fetch users from backend
   const fetchUsers = useCallback(
     (page = 1, pageSize = 10, search = '') => {
       setLoading(true);
-      getUsers(page, pageSize, null, search) // on passe la recherche au backend
+      getUsers(page, pageSize, null, search)
         .then((res) => {
           setUsers(res.data.results || res.data);
           setPagination((prev) => ({
@@ -61,7 +67,7 @@ export default function UserList() {
     []
   );
 
-  // Chargement initial et à chaque changement de pagination ou recherche
+  // reload users when pagination or searchText changes
   useEffect(() => {
     fetchUsers(pagination.current, pagination.pageSize, searchText);
   }, [fetchUsers, pagination.current, pagination.pageSize, searchText]);
@@ -89,13 +95,33 @@ export default function UserList() {
     }));
   };
 
-  // Au moment de déclencher la recherche (clic ou Entrée)
-  const onSearch = (value) => {
-    setSearchText(value.trim());
+  // On Search button or Enter key pressed
+  const onSearch = () => {
+    setSearchText(searchInput.trim());
     setPagination((prev) => ({
       ...prev,
       current: 1,
     }));
+  };
+
+  const exportToExcel = () => {
+    const dataToExport = users.map(({ id, last_name, first_name, email, role, phone_number }) => ({
+      ID: id,
+      Nom: last_name || '',
+      Prénom: first_name || '',
+      Email: email,
+      Rôle: ROLE_LABELS[role] || role,
+      Téléphone: phone_number || '',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Utilisateurs');
+
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+    saveAs(blob, 'utilisateurs.xlsx');
   };
 
   const columns = [
@@ -104,14 +130,14 @@ export default function UserList() {
       dataIndex: 'last_name',
       key: 'last_name',
       sorter: (a, b) => (a.last_name || '').localeCompare(b.last_name || ''),
-      render: (text) => text || <i>Non renseigné</i>,
+      render: (text) => text || <i>-</i>,
     },
     {
       title: 'Prénom',
       dataIndex: 'first_name',
       key: 'first_name',
       sorter: (a, b) => (a.first_name || '').localeCompare(b.first_name || ''),
-      render: (text) => text || <i>Non renseigné</i>,
+      render: (text) => text || <i>-</i>,
     },
     {
       title: 'Email',
@@ -139,7 +165,7 @@ export default function UserList() {
       title: 'Téléphone',
       dataIndex: 'phone_number',
       key: 'phone_number',
-      render: (phone) => phone || <i>Non renseigné</i>,
+      render: (phone) => phone || <i>-</i>,
     },
     {
       title: 'Actions',
@@ -174,38 +200,47 @@ export default function UserList() {
 
   return (
     <div style={{ padding: 24 }}>
-      <Breadcrumb style={{ marginBottom: 16 }}>
-        <Breadcrumb.Item>Utilisateurs</Breadcrumb.Item>
-        <Breadcrumb.Item>Liste</Breadcrumb.Item>
-      </Breadcrumb>
-
-      <h1>Liste des utilisateurs</h1>
-
-      <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <Button type="primary" onClick={() => navigate('/dashboard/users/add')}>
-          Ajouter un utilisateur
-        </Button>
-        <Search
-          placeholder="Rechercher par nom, prénom, email..."
-          allowClear
-          enterButton
-          onSearch={onSearch}
-          style={{ maxWidth: 300 }}
-        />
-      </Space>
+      <Row align="middle" justify="space-between" style={{ marginBottom: 16 }}>
+        <Col>
+          <Breadcrumb>
+            <Breadcrumb.Item>Utilisateurs</Breadcrumb.Item>
+            <Breadcrumb.Item>Liste</Breadcrumb.Item>
+          </Breadcrumb>
+        </Col>
+        <Col>
+          <Space>
+            <Button type="primary" onClick={() => navigate('/dashboard/users/add')}>
+              Ajouter un utilisateur
+            </Button>
+            <Button onClick={exportToExcel}>
+              Exporter en Excel
+            </Button>
+            <Search
+              placeholder="Rechercher par nom, prénom, email..."
+              allowClear
+              enterButton
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onSearch={onSearch}
+              style={{ width: 300 }}
+            />
+          </Space>
+        </Col>
+      </Row>
 
       <Table
         rowKey="id"
         columns={columns}
         dataSource={users}
         loading={loading}
+        size="small"
         pagination={{
           current: pagination.current,
           pageSize: pagination.pageSize,
           total: pagination.total,
           showSizeChanger: true,
-          pageSizeOptions: ['10', '20', '50'],
-          showTotal: (total, range) => `${range[0]}-${range[1]} sur ${total} utilisateurs`,
+          pageSizeOptions: ['12', '20', '50'],
+          showTotal: (total, range) => `${range[0]}-${range} sur ${total} utilisateurs`,
         }}
         onChange={handleTableChange}
         bordered

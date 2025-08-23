@@ -75,7 +75,7 @@ export default function AdvancedSidebar({ collapsed, onCollapse }) {
           userSelect: 'none',
         }}
       >
-        {collapsed ? 'ID' : 'IDAV Dashboard'}
+        {collapsed ? 'Dim+' : 'Dim+ Dashboard'}
       </div>
 
       <Menu
