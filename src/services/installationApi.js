@@ -1,33 +1,22 @@
-import axios from 'axios';
+import api from './api';  // l'instance axios configurée avec baseURL et interceptor
 
-const API_URL = 'http://127.0.0.1:8000/user/api';  // base URL de votre backend API (ajustez si besoin)
-
-export const getInstallations = (token) => {
-  return axios.get(`${API_URL}/installations/`, {
-    headers: { Authorization: `Token ${token}` }
-  });
+// Les endpoints de l'API Installation
+export const getInstallations = () => {
+  return api.get('/installation/installations/');
 };
 
-export const getInstallationById = (token, id) => {
-  return axios.get(`${API_URL}/installations/${id}/`, {
-    headers: { Authorization: `Token ${token}` }
-  });
+export const getInstallationById = (id) => {
+  return api.get(`/installation/installations/${id}/`);
 };
 
-export const createInstallation = (token, data) => {
-  return axios.post(`${API_URL}/installations/`, data, {
-    headers: { Authorization: `Token ${token}` }
-  });
+export const createInstallation = (data) => {
+  return api.post('/installation/installations/', data);
 };
 
-export const updateInstallation = (token, id, data) => {
-  return axios.put(`${API_URL}/installations/${id}/`, data, {
-    headers: { Authorization: `Token ${token}` }
-  });
+export const updateInstallation = (id, data) => {
+  return api.put(`/installation/installations/${id}/`, data);
 };
 
-export const deleteInstallation = (token, id) => {
-  return axios.delete(`${API_URL}/installations/${id}/`, {
-    headers: { Authorization: `Token ${token}` }
-  });
+export const deleteInstallation = (id) => {
+  return api.delete(`/installation/installations/${id}/`);
 };

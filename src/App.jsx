@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 // Users
+
 import Clients from './pages/users/Clients';
 import Techniciens from './pages/users/Techniciens';
 import UserList from './pages/users/UserList';
@@ -22,6 +23,7 @@ import Acceptes from './pages/installations/Acceptes';
 import Devis from './pages/installations/Devis';
 import InstallationList from './pages/installations/InstallationList';
 import Propositions from './pages/installations/Propositions';
+import InstallationDetail from './pages/installations/InstallationDetail';
 import UserAdd from './pages/users/UserAdd';
 import UserDetail from './pages/users/UserDetail';
 import UserEdit from './pages/users/UserEdit';
@@ -71,14 +73,15 @@ export default function App() {
                   <Route path="marques" element={<Marques />} />
                     <Route path="equipements/add" element={<EquipementAdd />} />
                   <Route path="equipements/:id" element={<EquipementView />} />
-   <Route path="/profile/update" element={<ProfileUpdate />} />
-        {/* Route vers la page de modification d'un équipement */}
-        <Route path="equipements/:id/edit" element={<EquipementUpdate />} />
-                  <Route path="caracteristiques" element={<Caracteristiques />} />
+                  <Route path="/profile/update" element={<ProfileUpdate />} />
+              {/* Route vers la page de modification d'un équipement */}
+                <Route path="equipements/:id/edit" element={<EquipementUpdate />} />
+                <Route path="caracteristiques" element={<Caracteristiques />} />
 
                   {/* Installations */}
                   <Route path="installations/list" element={<InstallationList />} />
                   <Route path="installations/propositions" element={<Propositions />} />
+                    <Route path="installation/:id" element={<InstallationDetail />} />
                   <Route path="installations/acceptées" element={<Acceptes />} />
                   <Route path="devis" element={<Devis />} />
 
@@ -91,8 +94,8 @@ export default function App() {
                   <Route path="statistiques" element={<Statistiques />} />
                   <Route path="parametres" element={<Parametres />} />
 
-  <Route path="/profile" element={<Profile />} />
-  <Route path="/settings" element={<Settings />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
                   {/* Redirection par défaut si sous-chemin inconnu sous /dashboard */}
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
