@@ -91,6 +91,7 @@ export default function InstallationDetail() {
           {province?.nom} <br /> Irradiation: {province?.irradiation || '—'}
         </Descriptions.Item>
 
+
         <Descriptions.Item label="Budget Client">
           {budget_client ? `${Number(budget_client).toLocaleString()} XOF` : '—'}
         </Descriptions.Item>
