@@ -44,7 +44,7 @@ export default function UserAdd() {
         phone_number: values.phone_number || '',
       };
 
-      await axios.post('http://127.0.0.1:8000/user/api/register/', payload);
+      await axios.post('https://api.dimfaso.com/user/api/register/', payload);
 
       message.success('Utilisateur créé avec succès');
       navigate('/dashboard/users/list');

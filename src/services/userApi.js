@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // URL de base de l'API utilisateur (à adapter selon backend)
-const API_URL = 'http://127.0.0.1:8000/user/api';
+const API_URL = 'https://api.dimfaso.com/user/';
 
 // Instance axios configurée (auth token injecté automatiquement)
 const api = axios.create({
@@ -29,7 +29,7 @@ api.interceptors.request.use(
 
 // Connexion (login) - pas besoin de token
 export const login = (credentials) => {
-  return axios.post(`${API_URL}/login/`, credentials);
+  return axios.post(`${API_URL}auth/login/`, credentials);
 };
 
 // Inscription (register) - pas besoin de token

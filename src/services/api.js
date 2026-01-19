@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // URL de base API Django (adapter selon votre config)
-const API_URL = 'http://127.0.0.1:8000';
-
+//const API_URL = 'http://127.0.0.1:8000';
+const API_URL = 'https://api.dimfaso.com';
 // Création instance Axios
 const api = axios.create({
   baseURL: API_URL,
